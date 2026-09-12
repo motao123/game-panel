@@ -41,6 +41,8 @@ export default function Tasks(): React.JSX.Element {
           <Tag color="processing">运行中</Tag>
         ) : v === 'success' ? (
           <Tag color="success">成功</Tag>
+        ) : v === 'interrupted' ? (
+          <Tag color="warning">已中断</Tag>
         ) : (
           <Tag color="error">失败 (exit={r.exitCode ?? '?'})</Tag>
         ),

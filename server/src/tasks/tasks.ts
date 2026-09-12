@@ -1,5 +1,7 @@
 import { spawn } from 'node:child_process';
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import { EventEmitter } from 'node:events';
 import { CONFIG } from '../config.js';
 import { conflict } from '../errors.js';
@@ -15,7 +17,7 @@ export const TASK_KIND_LABEL: Record<TaskKind, string> = {
   backup: '备份',
 };
 
-export type TaskStatus = 'running' | 'success' | 'failed';
+export type TaskStatus = 'running' | 'success' | 'failed' | 'interrupted';
 
 export interface TaskSnapshot {
   id: string;
@@ -90,9 +92,76 @@ export interface StartSpec {
 
 const HISTORY_LIMIT = 50;
 
+/** 任务历史持久化路径（面板重启后任务不再凭空消失） */
+const historyFile = path.join(CONFIG.stateDir, 'tasks-history.json');
+
+interface PersistedTask {
+  id: string;
+  kind: TaskKind;
+  title: string;
+  gameId: string | null;
+  status: TaskStatus;
+  createdAt: number;
+  endedAt: number | null;
+  exitCode: number | null;
+  output: string;
+  truncated: boolean;
+}
+
 class TaskManager extends EventEmitter {
   private readonly tasks = new Map<string, InternalTask>();
   private readonly activeByKind = new Map<TaskKind, string>();
+
+  constructor() {
+    super();
+    this.restoreHistory();
+  }
+
+  /** 启动时恢复上一次面板的历史任务；运行中被重启打断的标记为 interrupted */
+  private restoreHistory(): void {
+    try {
+      const raw = fs.readFileSync(historyFile, 'utf-8');
+      const items = JSON.parse(raw) as PersistedTask[];
+      for (const p of items) {
+        const interrupted = p.status === 'running';
+        const task: InternalTask = {
+          id: p.id,
+          kind: p.kind,
+          title: p.title,
+          gameId: p.gameId,
+          status: interrupted ? 'interrupted' : p.status,
+          createdAt: p.createdAt,
+          endedAt: p.endedAt ?? (interrupted ? Date.now() : null),
+          exitCode: p.exitCode,
+          buf: new RingBuffer(CONFIG.taskOutputMaxBytes),
+          child: null,
+        };
+        if (interrupted) task.buf.push('\n[panel] 面板重启导致任务中断（进程已随面板终止）\n');
+        else task.buf.push(p.output);
+        this.tasks.set(p.id, task);
+      }
+    } catch {
+      /* 首次启动或历史损坏：从空任务列表开始 */
+    }
+  }
+
+  private persistHistory(): void {
+    try {
+      fs.mkdirSync(CONFIG.stateDir, { recursive: true });
+      const items: PersistedTask[] = [...this.tasks.values()]
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .slice(0, HISTORY_LIMIT)
+        .map((t) => {
+          const s = this.snapshot(t);
+          return { ...s, output: s.output.slice(-4096) };
+        });
+      const tmp = path.join(CONFIG.stateDir, '.tasks-history.tmp');
+      fs.writeFileSync(tmp, JSON.stringify(items), { mode: 0o600 });
+      fs.renameSync(tmp, historyFile);
+    } catch {
+      /* 持久化失败不影响任务执行 */
+    }
+  }
 
   start(spec: StartSpec): TaskSnapshot {
     const activeId = this.activeByKind.get(spec.kind);
@@ -114,6 +183,7 @@ class TaskManager extends EventEmitter {
     };
     this.tasks.set(id, task);
     this.activeByKind.set(spec.kind, id);
+    this.persistHistory();
 
     const secrets = spec.secrets ?? [];
     const timer = setTimeout(
@@ -149,6 +219,7 @@ class TaskManager extends EventEmitter {
       task.endedAt = Date.now();
       if (this.activeByKind.get(spec.kind) === id) this.activeByKind.delete(spec.kind);
       this.prune();
+      this.persistHistory();
       this.emitUpdate(task, '');
     };
 

@@ -60,6 +60,7 @@ export default function TaskModal({ taskId, onClose, title }: Props): React.JSX.
   useEffect(() => {
     if (done && task) {
       if (task.status === 'success') message.success(`${task.kindLabel}完成`);
+      else if (task.status === 'interrupted') message.warning(`${task.kindLabel}因面板重启而中断`);
       else message.error(`${task.kindLabel}失败（exit=${task.exitCode ?? '?'}）`);
     }
   }, [done, task, message]);
@@ -77,6 +78,8 @@ export default function TaskModal({ taskId, onClose, title }: Props): React.JSX.
       <Tag color="processing">运行中</Tag>
     ) : task.status === 'success' ? (
       <Tag color="success">成功</Tag>
+    ) : task.status === 'interrupted' ? (
+      <Tag color="warning">已中断</Tag>
     ) : (
       <Tag color="error">失败 (exit={task.exitCode ?? '?'})</Tag>
     );

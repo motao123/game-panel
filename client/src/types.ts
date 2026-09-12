@@ -72,7 +72,7 @@ export interface TaskSnapshot {
   kindLabel: string;
   title: string;
   gameId: string | null;
-  status: 'running' | 'success' | 'failed';
+  status: 'running' | 'success' | 'failed' | 'interrupted';
   createdAt: number;
   endedAt: number | null;
   exitCode: number | null;
