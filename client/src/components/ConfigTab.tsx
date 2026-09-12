@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, App, Button, Card, Space, Tag, Typography } from 'antd';
+import { Alert, App, Button, Card, Space, Tag, Typography, theme } from 'antd';
 import { api } from '../api';
 import type { ConfigApplyResult } from '../types';
 
@@ -9,6 +9,7 @@ import type { ConfigApplyResult } from '../types';
  */
 export default function ConfigTab({ gameId, configPath }: { gameId: string; configPath: string }): React.JSX.Element {
   const { message } = App.useApp();
+  const { token } = theme.useToken();
   const [content, setContent] = useState<string>('');
   const [origin, setOrigin] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -128,7 +129,7 @@ export default function ConfigTab({ gameId, configPath }: { gameId: string; conf
           lineHeight: 1.5,
           padding: 12,
           borderRadius: 6,
-          border: '1px solid #d9d9d9',
+          border: `1px solid ${token.colorBorder}`,
           resize: 'vertical',
         }}
       />

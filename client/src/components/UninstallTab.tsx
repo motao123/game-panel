@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, App, Button, Card, Descriptions, Input, List, Space, Typography } from 'antd';
+import { Alert, App, Button, Card, Descriptions, Input, List, Space, Typography, theme } from 'antd';
 import { WarningOutlined } from '@ant-design/icons';
 import { api } from '../api';
 import type { UninstallPreview } from '../types';
@@ -13,6 +13,7 @@ export default function UninstallTab({
   onUninstalled: () => void;
 }): React.JSX.Element {
   const { message } = App.useApp();
+  const { token } = theme.useToken();
   const [preview, setPreview] = useState<UninstallPreview | null>(null);
   const [confirm, setConfirm] = useState('');
   const [taskId, setTaskId] = useState<string | null>(null);
@@ -48,7 +49,7 @@ export default function UninstallTab({
     <Card
       title={
         <span>
-          <WarningOutlined style={{ color: '#cf1322' }} /> 一键卸载 · {preview.label}
+          <WarningOutlined style={{ color: token.colorError }} /> 一键卸载 · {preview.label}
         </span>
       }
     >

@@ -66,7 +66,7 @@ export default function GameDetail(): React.JSX.Element {
         items={[
           { key: 'logs', label: '日志', children: <LogsTab gameId={gameId} unit={game.unit} /> },
           { key: 'backups', label: '备份/恢复', children: <BackupsTab gameId={gameId} backupDir={game.backupDir} /> },
-          { key: 'schedule', label: '计划任务', children: <ScheduleTab gameId={gameId} unit={game.unit} /> },
+          { key: 'schedule', label: '计划任务', children: <ScheduleTab gameId={gameId} unit={game.unit} manager={game.manager} /> },
           ...(game.configEditable && game.configPath
             ? [{ key: 'config', label: '配置', children: <ConfigTab gameId={gameId} configPath={game.configPath} /> }]
             : []),

@@ -12,16 +12,17 @@
 | 模块 | 说明 | 底层入口（唯一真源） |
 |------|------|----------------------|
 | 登录/初始化 | 单管理员 + bcrypt；首次访问引导设置密码，初始化后注册接口永久 403 | 面板自有状态（JSON 0600） |
-| Dashboard | 自动发现已安装游戏、运行状态/CPU/内存（/proc + systemctl show）/端口/最近备份，前端 5 秒轮询 | `systemctl list-units/show`、`/proc/<pid>`、备份目录扫描 |
+| 主题 | 浅色 / 深色 / 跟随系统（`gp-theme` localStorage），侧栏底部与登录页右上角切换，AntD algorithm 切换 + body 背景同步 | — |
+| Dashboard | 顶部汇总条（运行中/已停止/已安装/可安装/最近任务）+ 每游戏一张卡片（状态徽标、CPU/内存/端口、最近备份、最近任务、按状态机启停快捷操作），新手引导 Steps 卡（无已安装游戏时显示，`gp-onboarding-done` 记忆关闭），前端 5 秒轮询 | `systemctl list-units/show`、`/proc/<pid>`、备份目录扫描 |
 | 生命周期 | start / stop / restart / update，结果回显 | `<game>-manager start\|stop\|restart`、`<game>-manager update` |
 | 日志 | journalctl 实时流（SSE），断线游标续传、心跳、unit 白名单 | `journalctl -u <unit>`（--show-cursor / --after-cursor） |
 | 备份管理 | 列表（名/时间/大小/sha256）、一键备份、restore latest/指定文件 | `<game>-manager backup`、`<game>-manager restore <latest\|绝对路径>` |
 | 安装向导 | 表单 → 白名单环境变量 → 后台任务流式回显；4 个专用脚本 + steam catalog 数据驱动 | `NONINTERACTIVE=1 bash <game>-server-install.sh`、`bash steam-server-install.sh <slug>` |
-| 计划任务 | 可视化 list/add/remove + OnCalendar 模板 + 下次触发时间 | `<game>-manager schedule add/list/remove`（数据源 `/etc/<game>/tasks/*.cmd`） |
+| 计划任务 | 可视化 list/add/remove + 分组模板库（重启/备份/命令类，自动填充 OnCalendar + `<manager>` 命令）+ 下次触发时间 | `<game>-manager schedule add/list/remove`（数据源 `/etc/<game>/tasks/*.cmd`） |
 | 配置编辑 | textarea 编辑 → 保存即 config-apply（备份→写→重启→15s 健康检查→失败自动回滚） | `<game>-manager config-apply`（EDITOR 经临时包装脚本注入） |
 | 审计页 | JSONL 表格 + game/action/关键字筛选 | `/var/log/game-server-scripts/audit.log` |
 | 一键卸载 | 展示将删除的单元/目录/用户清单，输入服务名确认 | `NONINTERACTIVE=1 FORCE_UNINSTALL=1 bash <script> --uninstall` |
-| 任务中心 | 安装/更新/备份/恢复/卸载统一任务模型：状态 + 1MB 环形缓冲 + SSE 输出订阅 + 同类互斥 | — |
+| 任务中心 | 安装/更新/备份/恢复/卸载统一任务模型：状态 + 1MB 环形缓冲 + SSE 输出订阅 + 同类互斥；类型/游戏/状态筛选，运行中任务流动进度条，失败任务行展开日志尾部（仅存在运行中任务时 5 秒自动刷新） | — |
 
 ## 支持的游戏（自动发现）
 
@@ -53,7 +54,7 @@ game-panel/
 │       ├── sse/              # SSE 握手/心跳/会话守卫（5s securityStamp 复检）
 │       └── routes/           # auth/games/lifecycle/logs/backups/install/tasks/schedule/config/audit/uninstall
 ├── client/                   # React 18 + Vite + TS + Ant Design 5
-│   └── src/                  # 登录 / 总览 / 游戏详情(日志·备份·计划任务·配置·卸载) / 安装向导 / 审计 / 任务中心
+│   └── src/                  # 登录 / 总览(汇总条·游戏卡片·新手引导) / 游戏详情(日志·备份·计划任务·配置·卸载) / 安装向导 / 审计 / 任务中心；theme.ts（浅色/深色/跟随系统）
 └── deploy/
     ├── game-panel.service    # systemd 单元样例
     ├── install.sh            # 一键部署（install → build → 装 unit）

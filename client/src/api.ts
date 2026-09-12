@@ -57,6 +57,12 @@ export async function api<T>(path: string, opts: ApiOptions = {}): Promise<T> {
   return data as T;
 }
 
+/** 剥离 ANSI 转义序列（脚本输出的颜色/控制码在终端渲染，Web 端仅展示纯文本） */
+export function stripAnsi(s: string): string {
+  // eslint-disable-next-line no-control-regex
+  return s.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '');
+}
+
 export function fmtBytes(n: number | null | undefined): string {
   if (n === null || n === undefined) return '-';
   if (n < 1024) return `${n} B`;

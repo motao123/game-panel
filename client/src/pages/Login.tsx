@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, Form, Input, Button, Typography, Alert, App } from 'antd';
+import ThemeToggle from '../components/ThemeToggle';
 import { api } from '../api';
 
 interface StatusResp {
@@ -55,7 +56,10 @@ export default function Login({ onLogin }: { onLogin: (username: string) => void
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f6fa' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+      <div style={{ position: 'absolute', top: 16, right: 24 }}>
+        <ThemeToggle />
+      </div>
       <Card style={{ width: 420 }}>
         <Typography.Title level={3} style={{ textAlign: 'center' }}>
           🎮 Game Panel

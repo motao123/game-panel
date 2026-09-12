@@ -1,18 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Modal, Tag, Typography, App } from 'antd';
-import { fmtTime } from '../api';
+import { fmtTime, stripAnsi } from '../api';
 import type { TaskSnapshot } from '../types';
 
 interface Props {
   taskId: string | null;
   onClose: (refresh: boolean) => void;
   title?: string;
-}
-
-/** 剥离 ANSI 转义序列（脚本输出的颜色/控制码在终端渲染，Web 端仅展示纯文本） */
-function stripAnsi(s: string): string {
-  // eslint-disable-next-line no-control-regex
-  return s.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '');
 }
 
 /** 任务输出订阅（SSE）：实时回显 + 终态提示 */
