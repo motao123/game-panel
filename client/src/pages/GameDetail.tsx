@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button, Card, Descriptions, Space, Tabs, Tag } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api, fmtBytes } from '../api';
 import type { GameStatus } from '../types';
 import LogsTab from '../components/LogsTab';
@@ -14,7 +14,10 @@ export default function GameDetail(): React.JSX.Element {
   const params = useParams<{ game: string }>();
   const gameId = params.game ?? '';
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [game, setGame] = useState<GameStatus | null>(null);
+  // 支持 ?tab= 深链（Dashboard 卡片卸载入口/引导按钮直达对应标签页）
+  const activeTab = searchParams.get('tab') ?? 'logs';
 
   const refresh = useCallback(async (): Promise<void> => {
     try {
@@ -63,6 +66,8 @@ export default function GameDetail(): React.JSX.Element {
       </Card>
 
       <Tabs
+        activeKey={activeTab}
+        onChange={(k) => setSearchParams(k === 'logs' ? {} : { tab: k })}
         items={[
           { key: 'logs', label: '日志', children: <LogsTab gameId={gameId} unit={game.unit} /> },
           { key: 'backups', label: '备份/恢复', children: <BackupsTab gameId={gameId} backupDir={game.backupDir} /> },

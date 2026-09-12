@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { App, Button, Card, Col, Popconfirm, Row, Space, Spin, Statistic, Tag, Tooltip, Typography, theme } from 'antd';
-import { PauseCircleOutlined, PlayCircleOutlined, RedoOutlined, SettingOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PauseCircleOutlined, PlayCircleOutlined, RedoOutlined, SettingOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { api, fmtBytes, fmtTime } from '../api';
 import type { GameStatus, TaskSnapshot } from '../types';
@@ -105,6 +105,7 @@ export default function GameStatusCard({
   latestTask: TaskSnapshot | null;
   onDone: () => void;
 }): React.JSX.Element {
+  const stoppedLike = g.installed && (g.active === 'inactive' || g.active === 'failed');
   return (
     <Card
       size="small"
@@ -175,7 +176,27 @@ export default function GameStatusCard({
         </div>
       </div>
       <div style={{ marginTop: 10 }}>
-        <LifecycleButtons g={g} onDone={onDone} />
+        <Space wrap>
+          <LifecycleButtons g={g} onDone={onDone} />
+          {/* 卸载入口（借鉴 GSM 实例卡片：删除就在卡片上，运行中禁用）。
+              原生 <a href> 整页跳转直达卸载页——不依赖 SPA 导航，最可靠 */}
+          {stoppedLike ? (
+            <a
+              href={`/games/${g.id}?tab=uninstall`}
+              title="删除游戏与全部数据（需在卸载页输入服务名确认）"
+            >
+              <Button size="small" danger icon={<DeleteOutlined />}>
+                卸载
+              </Button>
+            </a>
+          ) : (
+            <Tooltip title="需先停止服务才能卸载">
+              <Button size="small" icon={<DeleteOutlined />} disabled>
+                卸载
+              </Button>
+            </Tooltip>
+          )}
+        </Space>
       </div>
     </Card>
   );
