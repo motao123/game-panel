@@ -19,8 +19,8 @@ export const CONFIG = {
   scriptsDir: process.env.PANEL_SCRIPTS_DIR ?? '/opt/game-server-scripts',
   /** 面板私有状态目录（state JSON / JWT secret / 临时文件），0700/0600 */
   stateDir: process.env.PANEL_STATE_DIR ?? (isRoot ? '/var/lib/game-panel' : path.join(os.homedir(), '.game-panel')),
-  /** 前端构建产物目录（由后端静态托管） */
-  clientDir: process.env.PANEL_CLIENT_DIR ?? path.resolve(here, '../../../client/dist'),
+  /** 前端构建产物目录（由后端静态托管）；编译产物在 server/dist，源码运行在 server/src，上溯两级均为仓库根 */
+  clientDir: process.env.PANEL_CLIENT_DIR ?? path.resolve(here, '../../client/dist'),
   auditLogPath: process.env.PANEL_AUDIT_LOG ?? '/var/log/game-server-scripts/audit.log',
   taskOutputMaxBytes: 1024 * 1024,
   taskSseTailBytes: 64 * 1024,
