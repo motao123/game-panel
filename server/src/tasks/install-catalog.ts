@@ -102,6 +102,8 @@ function builtinEntry(def: GameDef): InstallEntry {
       f({ name: 'QUERY_PORT', label: '查询端口', type: 'number', defaultValue: '27015', pattern: '^[0-9]{1,5}$', maxLength: 5 }),
       f({ name: 'SWAP_SIZE', label: '目标 Swap', defaultValue: '16G', pattern: '^[0-9]+[GgMm]$', maxLength: 8 }),
       f({ name: 'STEAMCMD_PROXY', label: 'SteamCMD 代理', pattern: '^[A-Za-z0-9:/.=_-]{0,120}$', help: '如 socks5://127.0.0.1:7890' }),
+      f({ name: 'PALSERVER_ARCHIVE_URL', label: '离线包路径/URL（替代 SteamCMD）', pattern: '^[A-Za-z0-9:/.=_-]{0,200}$', help: 'Steam 被网络阻断时使用，内含 PalServer/ 目录' }),
+      f({ name: 'PALSERVER_ARCHIVE_SHA256', label: '离线包 SHA256（强烈建议）', pattern: '^[a-fA-F0-9]{0,64}$', maxLength: 64, help: '离线包校验和，防止下载被篡改' }),
     ],
   };
   return {
