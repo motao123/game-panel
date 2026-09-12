@@ -1,0 +1,9 @@
+node_modules/
+dist/
+build/
+*.log
+*.local
+.DS_Store
+# 运行时状态（绝不入库）
+*.state.json
+jwt-secret.key
