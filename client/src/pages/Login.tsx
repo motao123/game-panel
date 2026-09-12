@@ -19,29 +19,36 @@ export default function Login({ onLogin }: { onLogin: (username: string) => void
   }, []);
 
   const submit = async (): Promise<void> => {
+    // 统一 key：成功/初始化时精确关闭本页错误提示，避免跳转后残留
+    const LOGIN_MSG_KEY = 'login-feedback';
     try {
       const values = await form.validateFields();
       setLoading(true);
       if (initialized === false) {
         if (values.password !== values.confirm) {
-          message.error('两次输入的密码不一致');
+          message.open({ type: 'error', key: LOGIN_MSG_KEY, content: '两次输入的密码不一致' });
           return;
         }
         const r = await api<{ username: string }>('/api/auth/init', {
           method: 'POST',
           body: { username: values.username, password: values.password },
         });
-        message.success('初始化完成，已登录');
+        message.destroy(LOGIN_MSG_KEY);
         onLogin(r.username);
       } else {
         const r = await api<{ username: string }>('/api/auth/login', {
           method: 'POST',
           body: { username: values.username, password: values.password },
         });
+        message.destroy(LOGIN_MSG_KEY);
         onLogin(r.username);
       }
     } catch (e) {
-      message.error(e instanceof Error ? e.message : '操作失败');
+      message.open({
+        type: 'error',
+        key: LOGIN_MSG_KEY,
+        content: e instanceof Error ? e.message : '操作失败',
+      });
     } finally {
       setLoading(false);
     }

@@ -33,6 +33,8 @@ export function tasksRouter(): Router {
     const finishIfDone = (): void => {
       const snap = taskManager.get(id);
       if (snap && snap.status !== 'running') {
+        // 先补发终态 snapshot 再 end：保证订阅端收到 end 时已拿到最终 status/exitCode
+        sseSend(res, 'snapshot', snap);
         sseSend(res, 'end', { status: snap.status, exitCode: snap.exitCode });
         guardRef?.close();
       }

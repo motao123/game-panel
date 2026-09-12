@@ -9,6 +9,12 @@ interface Props {
   title?: string;
 }
 
+/** 剥离 ANSI 转义序列（脚本输出的颜色/控制码在终端渲染，Web 端仅展示纯文本） */
+function stripAnsi(s: string): string {
+  // eslint-disable-next-line no-control-regex
+  return s.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '');
+}
+
 /** 任务输出订阅（SSE）：实时回显 + 终态提示 */
 export default function TaskModal({ taskId, onClose, title }: Props): React.JSX.Element | null {
   const { message } = App.useApp();
@@ -26,13 +32,20 @@ export default function TaskModal({ taskId, onClose, title }: Props): React.JSX.
     es.addEventListener('snapshot', (ev) => {
       const snap = JSON.parse((ev as MessageEvent).data) as TaskSnapshot;
       setTask(snap);
-      setOutput(snap.output);
+      setOutput(stripAnsi(snap.output));
     });
     es.addEventListener('output', (ev) => {
       const d = JSON.parse((ev as MessageEvent).data) as { appended: string };
-      setOutput((prev) => (prev + d.appended).slice(-1024 * 1024));
+      setOutput((prev) => (prev + stripAnsi(d.appended)).slice(-1024 * 1024));
     });
-    es.addEventListener('end', () => {
+    es.addEventListener('end', (ev) => {
+      // 兜底：若终态 snapshot 因任何原因未先到达，用 end 载荷修正状态
+      try {
+        const d = JSON.parse((ev as MessageEvent).data) as { status: string; exitCode: number | null };
+        setTask((prev) => (prev && prev.status === 'running' ? { ...prev, status: d.status as TaskSnapshot['status'], exitCode: d.exitCode } : prev));
+      } catch {
+        /* end 载荷解析失败不阻断关闭 */
+      }
       setDone(true);
       es.close();
     });
@@ -71,7 +84,11 @@ export default function TaskModal({ taskId, onClose, title }: Props): React.JSX.
   return (
     <Modal
       open
-      title={`${title ?? task?.title ?? '任务'} ${statusTag}`}
+      title={
+        <span>
+          {title ?? task?.title ?? '任务'} {statusTag}
+        </span>
+      }
       width={860}
       onCancel={() => onClose(true)}
       footer={null}
